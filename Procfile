@@ -1,2 +1,2 @@
-web: node run start
+web: node server
 postdeploy: node server db migrate
