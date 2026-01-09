@@ -8,7 +8,7 @@
 # Port the server should listen to
 # ---------------------------------------------------------------------
 
-port: 3000
+port: $(PORT)
 
 # ---------------------------------------------------------------------
 # Database
@@ -24,12 +24,12 @@ db:
   type: postgres
 
   # PostgreSQL / MySQL / MariaDB / MS SQL Server only:
-  host: localhost
-  port: 5432
-  user: wikijs
-  pass: wikijsrocks
-  db: wiki
-  ssl: false
+  host: '$(DB_HOST)'
+  db: '$(DB_NAME)'
+  port: $(DB_PORT)
+  user: '$(DB_USER)'
+  pass: '$(DB_PASS)'
+  ssl: true
 
   # Optional - PostgreSQL / MySQL / MariaDB only:
   # -> Uncomment lines you need below and set `auto` to false
