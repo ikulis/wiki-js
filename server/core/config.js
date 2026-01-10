@@ -3,6 +3,7 @@ const chalk = require('chalk')
 const cfgHelper = require('../helpers/config')
 const fs = require('fs')
 const path = require('path')
+const url = require('url')
 const yaml = require('js-yaml')
 
 /* global WIKI */
@@ -57,6 +58,54 @@ module.exports = {
     }
 
     const packageInfo = require(path.join(WIKI.ROOTPATH, 'package.json'))
+
+    // Parse DATABASE_URL environment variable
+    if (process.env.DATABASE_URL) {
+      console.info(chalk.blue(`DATABASE_URL is defined. Parsing connection string...`))
+      try {
+        const dbUrl = new url.URL(process.env.DATABASE_URL)
+
+        // Extract connection parameters
+        if (dbUrl.protocol === 'postgres:' || dbUrl.protocol === 'postgresql:') {
+          appconfig.db.type = 'postgres'
+        }
+
+        if (dbUrl.hostname) {
+          appconfig.db.host = dbUrl.hostname
+        }
+
+        if (dbUrl.port) {
+          appconfig.db.port = parseInt(dbUrl.port, 10)
+        }
+
+        if (dbUrl.username) {
+          appconfig.db.user = dbUrl.username
+        }
+
+        if (dbUrl.password) {
+          appconfig.db.pass = dbUrl.password
+        }
+
+        if (dbUrl.pathname && dbUrl.pathname.length > 1) {
+          appconfig.db.db = dbUrl.pathname.substring(1) // Remove leading slash
+        }
+
+        // Parse SSL mode from query parameters
+        const searchParams = new url.URLSearchParams(dbUrl.search)
+        if (searchParams.has('sslmode')) {
+          const sslMode = searchParams.get('sslmode')
+          // SSL is enabled for all modes except 'disable'
+          appconfig.db.ssl = sslMode !== 'disable'
+          console.info(chalk.blue(`  SSL mode: ${sslMode} (ssl: ${appconfig.db.ssl})`))
+        }
+
+        console.info(chalk.green.bold(`  Database connection parsed successfully`))
+      } catch (err) {
+        console.error(chalk.red.bold(`>>> Failed to parse DATABASE_URL environment variable!`))
+        console.error(err.message)
+        process.exit(1)
+      }
+    }
 
     // Load DB Password from Docker Secret File
     if (process.env.DB_PASS_FILE) {
